@@ -16,6 +16,12 @@ echo "+++++ build rust packages +++++"
 
 cd rust/render
 cargo build --release --target x86_64-unknown-linux-musl
+if [ $? -ne 0 ]
+then
+    echo "cargo build failed"
+    exit 1
+fi
+
 cp target/x86_64-unknown-linux-musl/release/render ../../bin/render/bootstrap
 
 echo "+++++ apply terraform +++++"

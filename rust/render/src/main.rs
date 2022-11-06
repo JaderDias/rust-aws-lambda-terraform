@@ -1,6 +1,7 @@
-use lambda_runtime::{handler_fn};
-use log::{info,error};
-use serde::{Serialize, Deserialize};
+use lambda_runtime::{ handler_fn };
+use log::{ info, error };
+use serde::{ Serialize, Deserialize };
+use std::env;
 use time;
 
 #[derive(Deserialize)]
@@ -41,7 +42,13 @@ async fn main() -> Result<(), lambda_runtime::Error> {
 
 async fn handler(req: Request, _ctx: lambda_runtime::Context) -> Response {
     info!("handling a request...");
-    let bucket_name = std::env::var("BUCKET_NAME")
+    let key = "dynamodb_table_name";
+    match env::var(key) {
+        Ok(val) => println!("{key}: {val:?}"),
+        Err(e) => println!("couldn't interpret {key}: {e}"),
+    }
+    let bucket_name = std::env
+        ::var("BUCKET_NAME")
         .expect("A BUCKET_NAME must be set in this app's Lambda environment variables.");
 
     // No extra configuration is needed as long as your Lambda has
@@ -57,29 +64,19 @@ async fn handler(req: Request, _ctx: lambda_runtime::Context) -> Response {
         .body(req.body.as_bytes().to_owned().into())
         .key(&filename)
         .content_type("text/plain")
-        .send()
-        .await
+        .send().await
         .map_err(|err| {
             // In case of failure, log a detailed error to CloudWatch.
-            error!(
-                "failed to upload file '{}' to S3 with error: {}",
-                &filename, err
-            );
+            error!("failed to upload file '{}' to S3 with error: {}", &filename, err);
             // The sender of the request receives this message in response.
             FailureResponse {
                 body: "The lambda encountered an error and your message was not saved".to_owned(),
             }
         })?;
 
-    info!(
-        "Successfully stored the incoming request in S3 with the name '{}'",
-        &filename
-    );
+    info!("Successfully stored the incoming request in S3 with the name '{}'", &filename);
 
     Ok(SuccessResponse {
-        body: format!(
-            "the lambda has successfully stored the your request in S3 with name '{}'",
-            filename
-        ),
+        body: format!("the lambda has successfully stored the your request in S3 with name '{}'", filename),
     })
 }

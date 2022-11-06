@@ -22,10 +22,11 @@ resource "random_pet" "two" {
 module "edit_function" {
   source = "./modules/function"
 
-  bucket_name    = aws_s3_bucket.bucket.id
-  function_name  = "${terraform.workspace}_render_${random_pet.one.id}_${random_pet.two.id}"
-  lambda_handler = "handler"
-  source_dir     = "../bin/render"
+  bucket_name         = aws_s3_bucket.bucket.id
+  dynamodb_table_name = aws_dynamodb_table.site_table.name
+  function_name       = "${terraform.workspace}_render_${random_pet.one.id}_${random_pet.two.id}"
+  lambda_handler      = "handler"
+  source_dir          = "../bin/render"
   tags = {
     environment = terraform.workspace
   }

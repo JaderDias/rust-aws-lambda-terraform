@@ -16,7 +16,8 @@ resource "aws_lambda_function" "myfunc" {
   tags             = var.tags
   environment {
     variables = {
-      BUCKET_NAME = var.bucket_name
+      BUCKET_NAME         = var.bucket_name
+      dynamodb_table_name = var.dynamodb_table_name
     }
   }
 
