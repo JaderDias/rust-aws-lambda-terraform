@@ -4,6 +4,9 @@ use serde::{ Serialize, Deserialize };
 use std::env;
 use time;
 
+#[path = "./add.rs"]
+mod add;
+
 #[derive(Deserialize)]
 struct Request {
     pub body: String,
@@ -42,11 +45,9 @@ async fn main() -> Result<(), lambda_runtime::Error> {
 
 async fn handler(req: Request, _ctx: lambda_runtime::Context) -> Response {
     info!("handling a request...");
-    let key = "dynamodb_table_name";
-    match env::var(key) {
-        Ok(val) => println!("{key}: {val:?}"),
-        Err(e) => println!("couldn't interpret {key}: {e}"),
-    }
+    let dynamodb_table_name = env::var("dynamodb_table_name").unwrap();
+
+    println!("dynamodb_table_name: {dynamodb_table_name:?}");
     let bucket_name = std::env
         ::var("BUCKET_NAME")
         .expect("A BUCKET_NAME must be set in this app's Lambda environment variables.");
@@ -54,6 +55,22 @@ async fn handler(req: Request, _ctx: lambda_runtime::Context) -> Response {
     // No extra configuration is needed as long as your Lambda has
     // the necessary permissions attached to its role.
     let config = aws_config::load_from_env().await;
+    let dynamodb_client = aws_sdk_dynamodb::Client::new(&config);
+
+    let item = add::Item {
+        domain_and_path: "https://www.example.com/".to_string(),
+        language_bcp47: "en-US".to_string(),
+        is_edited: 0,
+    };
+    add::add_item(&dynamodb_client, &item, &dynamodb_table_name).await.map_err(|err| {
+        // In case of failure, log a detailed error to CloudWatch.
+        error!("failed to save row '{}' to dynamodb with error: {}", item.domain_and_path, err);
+        // The sender of the request receives this message in response.
+        FailureResponse {
+            body: "The lambda encountered an error and your message was not saved".to_owned(),
+        }
+    })?;
+
     let s3_client = aws_sdk_s3::Client::new(&config);
     // Generate a filename based on when the request was received.
     let filename = format!("{}.txt", time::OffsetDateTime::now_utc().unix_timestamp());

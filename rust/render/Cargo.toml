@@ -13,7 +13,8 @@ tokio = { version = "1", features = ["full"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # NOTE: the following crate is not part of the SDK, but it is maintained by AWS.
 lambda_runtime = "0.4"
-aws-config = "0.15.0"
+aws-config = "0.51.0"
 # We are using the Amazon Simple Storage Service (Amazon S3) crate in this example,
 # but you can use any SDK crate in your Lambda code.
-aws-sdk-s3 = "0.15.0"
+aws-sdk-s3 = "0.21.0"
+aws-sdk-dynamodb = "0.21.0"
