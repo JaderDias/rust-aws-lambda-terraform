@@ -22,6 +22,7 @@ resource "random_pet" "two" {
 module "edit_function" {
   source = "./modules/function"
 
+  architecture   = var.architecture
   bucket_name    = aws_s3_bucket.bucket.id
   function_name  = "${terraform.workspace}_render_${random_pet.one.id}_${random_pet.two.id}"
   lambda_handler = "handler"

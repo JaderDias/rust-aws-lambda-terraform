@@ -10,13 +10,13 @@ This project uses Terraform deploy a Rust AWS Lambda function to us-east-1.
 
 # development
 
-```
-# 1. Install Rust
-curl https://sh.rustup.rs -sSf | sh
-# 2. Install x86_64-unknown-linux-musl toolchain
-rustup target add x86_64-unknown-linux-musl
-# 3. Install musl-tools
-sudo apt install musl-tools
-# 4. deploy to AWS
-deploy.sh dev
-```
+1. Install Rust
+   * `curl https://sh.rustup.rs -sSf | sh`
+
+2. Install musl-gcc
+   * Linux `sudo apt install musl-tools`
+   * Mac   `brew install FiloSottile/musl-cross/musl-cross --with-x86_64 --with-aarch64`
+
+3. deploy to AWS
+   * `deploy.sh dev aarch64` or
+   * `deploy.sh dev x86_64`

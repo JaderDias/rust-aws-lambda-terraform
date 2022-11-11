@@ -5,15 +5,16 @@ data "archive_file" "lambda_zip" {
 }
 
 resource "aws_lambda_function" "myfunc" {
+  architectures    = [var.architecture]
   filename         = data.archive_file.lambda_zip.output_path
   function_name    = var.function_name
-  role             = aws_iam_role.iam_for_terraform_lambda.arn
   handler          = var.lambda_handler
-  source_code_hash = filebase64sha256(data.archive_file.lambda_zip.output_path)
-  runtime          = "provided.al2"
-  timeout          = 900 // with 8 goroutines in parallel we can parse 1000 warcs in 2.5 minutes
   memory_size      = 128 // it uses only 20 MiB because it saves the file to disk
+  role             = aws_iam_role.iam_for_terraform_lambda.arn
+  runtime          = "provided.al2"
+  source_code_hash = filebase64sha256(data.archive_file.lambda_zip.output_path)
   tags             = var.tags
+  timeout          = 900 // with 8 goroutines in parallel we can parse 1000 warcs in 2.5 minutes
   environment {
     variables = {
       BUCKET_NAME = var.bucket_name
