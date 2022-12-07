@@ -4,6 +4,7 @@ use serde::{ Serialize, Deserialize };
 use std::env;
 use time;
 use hyper::{ Client, Uri };
+use regex::Regex;
 
 #[path = "./add.rs"]
 mod add;
@@ -75,8 +76,10 @@ async fn handler(req: Request, _ctx: lambda_runtime::Context) -> Response {
 
     // Concatenate the body stream into a single buffer...
     let buf = hyper::body::to_bytes(res).await?;
+    let result = String::from_utf8(buf.into_iter().collect()).expect("");
 
-    println!("body: {:?}", buf);
+    let re = Regex::new(r"54\.82\.47\.122").unwrap();
+    println!("body: {:?}", re.is_match(&result));
 
     let s3_client = aws_sdk_s3::Client::new(&config);
     // Generate a filename based on when the request was received.
