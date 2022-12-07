@@ -18,3 +18,4 @@ aws-config = "0.51.0"
 # but you can use any SDK crate in your Lambda code.
 aws-sdk-s3 = "0.21.0"
 aws-sdk-dynamodb = "0.21.0"
+hyper = "0.14.23"

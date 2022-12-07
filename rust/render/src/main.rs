@@ -3,6 +3,7 @@ use log::{ info, error };
 use serde::{ Serialize, Deserialize };
 use std::env;
 use time;
+use hyper::{ Client, Uri };
 
 #[path = "./add.rs"]
 mod add;
@@ -33,6 +34,14 @@ impl std::fmt::Display for FailureResponse {
 // returned by `lambda_runtime::run(func).await` in `fn main`.
 impl std::error::Error for FailureResponse {}
 
+impl From<hyper::Error> for FailureResponse {
+    fn from(err: hyper::Error) -> Self {
+        FailureResponse {
+            body: format!("The lambda encountered an error and your message was not saved: {}", err),
+        }
+    }
+}
+
 type Response = Result<SuccessResponse, FailureResponse>;
 
 #[tokio::main]
@@ -55,21 +64,19 @@ async fn handler(req: Request, _ctx: lambda_runtime::Context) -> Response {
     // No extra configuration is needed as long as your Lambda has
     // the necessary permissions attached to its role.
     let config = aws_config::load_from_env().await;
-    let dynamodb_client = aws_sdk_dynamodb::Client::new(&config);
 
-    let item = add::Item {
-        domain_and_path: "https://www.example.com/".to_string(),
-        language_bcp47: "en-US".to_string(),
-        is_edited: 0,
-    };
-    add::add_item(&dynamodb_client, &item, &dynamodb_table_name).await.map_err(|err| {
-        // In case of failure, log a detailed error to CloudWatch.
-        error!("failed to save row '{}' to dynamodb with error: {}", item.domain_and_path, err);
-        // The sender of the request receives this message in response.
-        FailureResponse {
-            body: "The lambda encountered an error and your message was not saved".to_owned(),
-        }
-    })?;
+    let client = Client::new();
+
+    // Make a GET /ip to 'http://httpbin.org'
+    let res = client.get(Uri::from_static("http://httpbin.org/ip")).await?;
+
+    // And then, if the request gets a response...
+    println!("status: {}", res.status());
+
+    // Concatenate the body stream into a single buffer...
+    let buf = hyper::body::to_bytes(res).await?;
+
+    println!("body: {:?}", buf);
 
     let s3_client = aws_sdk_s3::Client::new(&config);
     // Generate a filename based on when the request was received.
